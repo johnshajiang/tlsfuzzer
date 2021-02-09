@@ -55,3 +55,6 @@ epydoc/
 
 # PyBuilder
 target/
+
+# macOS
+.DS_Store
