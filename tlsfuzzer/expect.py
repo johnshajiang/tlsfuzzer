@@ -527,10 +527,14 @@ class ExpectServerHello(_ExpectExtensionsMessage):
       ``server_handshake_traffic_secret``
       is derived and record layer is configured to expect encrypted records
       on the *receiving* side.
+
+    :ivar str ~.description: identifier to print when processing of the
+        node fails
     """
 
     def __init__(self, extensions=None, version=None, resume=False,
-                 cipher=None, server_max_protocol=None):
+                 cipher=None, server_max_protocol=None,
+                 description=None):
         """
         Initialize the object
 
@@ -568,6 +572,14 @@ class ExpectServerHello(_ExpectExtensionsMessage):
         self.version = version
         self.resume = resume
         self.srv_max_prot = server_max_protocol
+        self.description = description
+
+    def __str__(self):
+        """Return human redable representation of the object."""
+        if self.description:
+            return "ExpectServerHello(description={0!r})"\
+                   .format(self.description)
+        return "ExpectServerHello()"
 
     @staticmethod
     def _get_autohandler(ext_id):
@@ -1791,11 +1803,12 @@ class ExpectSSL2Alert(ExpectHandshake):
 class ExpectApplicationData(Expect):
     """Processing Application Data message"""
 
-    def __init__(self, data=None, size=None):
+    def __init__(self, data=None, size=None, output=None):
         super(ExpectApplicationData, self).\
                 __init__(ContentType.application_data)
         self.data = data
         self.size = size
+        self.output = output
 
     def process(self, state, msg):
         assert msg.contentType == ContentType.application_data
@@ -1806,6 +1819,10 @@ class ExpectApplicationData(Expect):
         if self.size and len(data) != self.size:
             raise AssertionError("ApplicationData of unexpected size: {0}, "
                                  "expected: {1}".format(len(data), self.size))
+        if self.output:
+            self.output.write("ExpectApplicationData received payload:\n")
+            self.output.write(data)
+            self.output.write("ExpectApplicationData end of payload.\n")
 
 
 class ExpectHeartbeat(ExpectMessage):
